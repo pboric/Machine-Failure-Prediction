@@ -1,64 +1,55 @@
-# Machine Failure Prediction System
+# Machine Failure Prediction
 
-A machine learning system that predicts equipment failures using sensor data through PCA and Random Forest classification.
+Predicting machine failures from nine sensor readings, including air quality (AQ) and volatile organic compounds
+(VOC) measured next to each machine. The project combines exploratory analysis and hypothesis tests with
+dimensionality reduction (PCA) and a tuned Random Forest.
 
-## Overview
-- Predicts failures with 87.3% accuracy
-- Uses 9 sensor inputs transformed into 5 principal components
-- Implements Random Forest with optimized hyperparameters
-- ROC AUC score: 0.943
+## Results
 
-## Features
-- Data preprocessing and PCA transformation
-- Tuned Random Forest classifier
-- Real-time monitoring capabilities
-- Balanced precision/recall for failure detection
+Test set of 189 machines (20 % hold-out):
 
-## Requirements
-```python
-pandas
-numpy
-scikit-learn
-matplotlib
-seaborn
-joblib
-```
+| Metric | Value |
+|---|---:|
+| Accuracy | 87.3 % |
+| ROC AUC | 0.943 |
+| Precision / recall (both classes) | ≈ 0.87 |
+| Errors | 14 false alarms, 10 missed failures |
 
-## Installation
+Cross-validated ROC AUC on the training set was 0.965.
+
+## Key findings
+
+- **VOC is the strongest single predictor** (correlation 0.80 with failure): failure rates rise from under 10 % at
+  VOC levels 0–2 to over 80 % at levels 5–6. AQ shows the same pattern more weakly (0.58).
+- Mann-Whitney U and chi-square tests confirm both relationships (p < 10⁻⁷⁰).
+- The sensors are strongly correlated with each other (VIF above 10 for AQ, CS, IP and RP), so the nine readings are
+  reduced to five principal components (77 % of the variance). The first component, driven by VOC, temperature, AQ
+  and the ultrasonic sensor, carries most of the predictive information.
+
+## Data
+
+`data/data.csv`: 944 records with nine sensor readings (footfall, temperature mode, AQ, ultrasonic sensor, current,
+VOC, rotational position, input pressure, temperature) and a failure flag (42 % failures).
+
+## Notebooks
+
+| Notebook | Content |
+|---|---|
+| [`EDA.ipynb`](EDA.ipynb) | Distributions, correlations, failure rates by VOC and AQ level, hypothesis tests, VIF, PCA |
+| [`Modeling.ipynb`](Modeling.ipynb) | Model comparison with PyCaret, Random Forest tuned with randomized search, evaluation |
+
+## Run it
+
 ```bash
-git clone https://github.com/[username]/machine-failure-prediction
-cd machine-failure-prediction
 pip install -r requirements.txt
+jupyter notebook EDA.ipynb
 ```
 
-## Usage
-```python
-from joblib import load
-model = load('rf_model_tuned.joblib')
+## Limitations
 
-# Predict failure probability
-def predict_failure(data):
-    return model.predict_proba(data)[:, 1]
-```
-
-## Model Architecture
-- Input: 9 sensor features
-- PCA transformation: 5 components
-- Random Forest parameters:
-  - n_estimators: 200
-  - max_depth: 5
-  - min_samples_split: 10
-  - class_weight: balanced
-
-## Performance
-- Accuracy: 87.3%
-- Precision: 0.87
-- Recall: 0.87
-- F1-score: 0.87
-- ROC AUC: 0.943
-
-## Contributing
-Pull requests welcome. For major changes, open an issue first.
+With 944 records the test set is small, so the scores have wide uncertainty. PCA makes the model harder to interpret
+than one built directly on the sensor readings.
 
 ## License
-[MIT](https://choosealicense.com/licenses/mit/)
+
+MIT
